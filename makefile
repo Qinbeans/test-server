@@ -1,30 +1,41 @@
 CC = clang++
 BUILD = bin
-TARG := $(BUILD)/server
+TARG := $(BUILD)
+DATE = $(shell date '+%Y-%m-%d' )
+FILE := test-$(DATE)
 CFLAG := -std=c++17 -Ofast  -I include
 LFLAG := -lpthread
 OBJ = $(patsubst src/%.cpp,$(BUILD)/%.o,$(wildcard src/*.cpp))
 
 ifeq ($(OS),Windows_NT)
-	CC := clang++
-	TARG := $(TARG).exe
+	PLAT = Windows
 	LFLAG += -lenet -fopenmp -lwinmm -lws2_32
 else
+	OS = $(shell uname -s)
 	ifeq ($(OS), Linux)
-		LFLAG += -L lib/Linux
+		PLAT = Linux
+		LFLAG += -lenet -L lib/Linux
 	else
-		LFLAG += -fopenmp
+		PLAT = Mac
+		CFLAG += -I /opt/homebrew/include
+		LFLAG += -lenet -L /opt/homebrew/lib
 	endif
 endif
+
+OBJ = $(patsubst src/%.cpp,$(BUILD)/$(PLAT)/%.o,$(wildcard src/*.cpp))
+TARG := $(TARG)/$(PLAT)/$(FILE)
 
 all: $(TARG) $(OBJ)
 
 $(TARG):$(OBJ)
 	$(CC) -o $(TARG) $(OBJ) $(LFLAG)
 
-$(OBJ): bin/%.o:src/%.cpp
+$(OBJ): bin/$(PLAT)/%.o:src/%.cpp
 	$(CC) -c $(CFLAG) $< -o $@
 
 clean:
-	rm $(BUILD)/*.o
+	rm $(BUILD)/$(PLAT)/*.o
 	rm $(TARG)
+
+init:
+	mkdir $(BUILD)/$(PLAT)
