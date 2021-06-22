@@ -38,4 +38,5 @@ clean:
 	rm $(TARG)
 
 init:
+	mkdir $(BUILD)
 	mkdir $(BUILD)/$(PLAT)
